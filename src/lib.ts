@@ -181,11 +181,16 @@ const baseContext = {
     }
 };
 
-async function executeAction(stack: ESStack, action: ActionDefinition, actionPayload: any): Promise<void> {
+export async function executeAction(stack: ESStack, action: ActionDefinition, actionPayload: any): Promise<void> {
     let knownEventId = undefined;
 
     const actionHandler = {
-        [ActionHandlerEnum.REJECT]: (result: ActionHandlerResult) => { throw new Error(`${result.action}: ${result.type}`) },
+        [ActionHandlerEnum.REJECT]: (result: ActionHandlerResult) => {
+            const err: any = new Error(`${result.action}: ${result.type}`);
+            err.action = result.action;
+            err.result = result.type;
+            throw err;
+        },
         [ActionHandlerEnum.COMMIT]: async (result: ActionHandlerResult) => {
             const payload = result.payloadOverride ?? actionPayload;
             const newEventId = knownEventId ? knownEventId + 1 : null;

@@ -1,7 +1,7 @@
-import { localStore } from "./local";
-import { ddbStore } from "./ddb";
-import { compileView, defineEventStack, esRepository } from "./lib";
-import { ModelMapContext } from "./types";
+import { localStore } from "../src/local";
+import { ddbStore } from "../src/ddb";
+import { compileView, defineEventStack, esRepository } from "../src/lib";
+import { ModelMapContext } from "../src/types";
 
 interface BankAccountBalanceView {
     balance: number;
