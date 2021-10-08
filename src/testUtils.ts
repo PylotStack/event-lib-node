@@ -5,7 +5,7 @@ import * as _ from "lodash";
 import { CloudFormation } from "aws-sdk";
 import * as assert from "assert";
 
-export interface StackTestBuilder {
+export interface BaseStackTestBuilder {
     withEvents(events: Array<Record<string, any>>): StackTestBuilder;
     onAction(actionType: string, payload: Record<string, any>): StackTestBuilder;
     commit(): StackTestBuilder;
@@ -14,8 +14,10 @@ export interface StackTestBuilder {
     test(): Promise<void>;
 }
 
+export type StackTestBuilder = BaseStackTestBuilder & (() => Promise<void>);
+
 export function stack(stackDef: EventStackDefinition): StackTestBuilder {
-    const self: StackTestBuilder = {} as StackTestBuilder;
+    const self: StackTestBuilder = (() => self.test()) as unknown as StackTestBuilder;
 
     let definition = {
         baseEvents: [],

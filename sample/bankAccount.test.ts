@@ -2,8 +2,8 @@ import "jest";
 import { stack } from "../src/testUtils";
 import { bankAccount, bankAccountBalance } from "./bankAccount";
 
-it("should deposit 10 dollars", async () => {
-    await stack(bankAccount.definition)
+it("should deposit 10 dollars",
+    stack(bankAccount.definition)
 
         .onAction("DEPOSIT", { amount: 10 })
         .commit()
@@ -16,6 +16,4 @@ it("should deposit 10 dollars", async () => {
         .onAction("WITHDRAW", { amount: 5 })
         .commit()
         .assertView(bankAccountBalance.definition, { balance: 5 })
-
-        .test();
-});
+);
