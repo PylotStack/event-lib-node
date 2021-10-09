@@ -1,18 +1,26 @@
+import * as Redis from "ioredis";
 import { ddbStore, ddbViewCache } from "../src/ddb";
+import { redisViewCache } from "../src/redis";
 import { esRepository } from "../src/lib";
-import { localStore } from "../src/local";
+import { localStore, localViewCache } from "../src/local";
 import { bankAccountModel } from "./bankAccount";
 
 async function getBankAccount() {
-    const store = localStore();
-    const repo = esRepository(store, {});
-    // const store = ddbStore("sctrl2-events");
-    // const repo = esRepository(store, {
-    //     viewCache: ddbViewCache({
-    //         namespace: "payments",
-    //         tablename: "sctrl2-views"
-    //     }),
+    // const viewCache = localViewCache();
+    // const viewCache = ddbViewCache({
+    //     namespace: "payments",
+    //     tablename: "sctrl2-views"
     // });
+    const viewCache = redisViewCache({
+        redis: new Redis(),
+    });
+
+    // const store = localStore();
+    // const repo = esRepository(store, {});
+    const store = ddbStore("sctrl2-events");
+    const repo = esRepository(store, {
+        viewCache,
+    });
     const bankAccount2 = await repo.findOrCreateModel("123", bankAccountModel);
 
     if (bankAccount2.status.suspended) await bankAccount2.suspend(false);
