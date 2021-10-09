@@ -1,7 +1,7 @@
 import * as _ from "lodash";
-import { ESEvent, ESStack, LocalStore } from "./types";
+import { CompiledView, ESEvent, ESStack, LocalStore, ViewCache, ViewDefinition } from "./types";
 
-export function localStack() : ESStack {
+export function localStack(namespace: string): ESStack {
     const events: ESEvent[] = [];
 
     async function commitEvent(ev: ESEvent) {
@@ -26,6 +26,7 @@ export function localStack() : ESStack {
     }
 
     return {
+        namespace,
         commitEvent,
         commitAnonymousEvent,
         getEvent,
@@ -33,20 +34,20 @@ export function localStack() : ESStack {
     };
 }
 
-export function localStore() : LocalStore {
+export function localStore(): LocalStore {
     const stacks = new Map<string, ESStack>();
 
-    async function getStack(name: string) : Promise<ESStack> {
+    async function getStack(name: string): Promise<ESStack> {
         return stacks.get(name);
     }
 
-    async function createStack(name: string) : Promise<ESStack> {
-        const stack = localStack();
+    async function createStack(name: string): Promise<ESStack> {
+        const stack = localStack(name);
         stacks.set(name, stack);
         return stack;
     }
 
-    async function getOrCreateStack(name: string) : Promise<ESStack> {
+    async function getOrCreateStack(name: string): Promise<ESStack> {
         const existingStack = await getStack(name);
         return existingStack
             ? existingStack
@@ -57,5 +58,22 @@ export function localStore() : LocalStore {
         getStack,
         createStack,
         getOrCreateStack,
+    };
+}
+
+export function localViewCache(): ViewCache {
+    let viewCache: Record<string, CompiledView> = {};
+
+    async function getFromCache(identifier: string): Promise<CompiledView> {
+        return viewCache[identifier];
+    }
+
+    async function updateCache(identifier: string, compiledView: CompiledView) {
+        viewCache[identifier] = compiledView;
+    }
+
+    return {
+        getFromCache,
+        updateCache,
     };
 }

@@ -6,6 +6,7 @@ export interface ESEvent<Payload = Record<string, any>> {
 }
 
 export interface ESStack {
+    namespace: string;
     commitEvent: (ev: ESEvent) => Promise<void>;
     commitAnonymousEvent: (ev: ESEvent) => Promise<void>;
     getEvent: (id: number) => Promise<ESEvent<Record<string, any>>>;
@@ -103,12 +104,12 @@ export interface ModelDefinition<T, ActionKeywords extends string> {
 }
 
 export interface BaseModel<T> {
-    _refresh: () => Promise<T>; 
+    _refresh: () => Promise<T>;
 }
 
 export interface ModelBuilder<T, ActionKeywords extends string> {
     definition: ModelDefinition<T, ActionKeywords>;
-    fromStack: (stack: ESStack) => Promise<T & BaseModel<T>>;
+    fromStack: (stack: ESStack, context: RepositoryContext) => Promise<T & BaseModel<T>>;
 }
 
 export interface Repository {
@@ -124,4 +125,16 @@ export interface EventStackBuilder<T extends string = null> {
     mapModel: <U>(mapper: (ctx: ModelMapContext<T>) => U) => ModelBuilder<U, T>;
 }
 
+export interface CompiledView {
+    eventId: number;
+    view: any
+}
 
+export interface ViewCache {
+    getFromCache: (identifier: string) => Promise<CompiledView>;
+    updateCache: (identifier: string, compiledView: CompiledView) => Promise<void>;
+}
+
+export interface RepositoryContext {
+    viewCache?: ViewCache;
+}

@@ -62,7 +62,7 @@ export function stack<T extends string = null>(stackDef: EventStackDefinition<T>
             return self;
         },
         async test() {
-            const stack = localStack();
+            const stack = localStack("test");
             for (let event of definition.baseEvents) {
                 await stack.commitEvent(event);
             }
