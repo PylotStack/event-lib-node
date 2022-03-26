@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "watch": "npm run tsc -- -w --preserveWatchOutput"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +29,7 @@
     "@aws-cdk/core": "1.125.0",
     "aws-cdk": "1.125.0",
     "aws-sdk": "^2.999.0",
+    "axios": "^0.24.0",
     "ioredis": "^4.27.10",
     "lodash": "^4.17.21",
     "mongodb": "^4.1.3"

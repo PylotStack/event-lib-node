@@ -137,25 +137,30 @@ export function ddbStore(tablename: string): LocalStore {
     });
     const stacks = new Map<string, ESStack>();
 
-    async function getStack(name: string): Promise<ESStack> {
-        return stacks.get(name);
+    function name(stackSet: string, stack: string) {
+        return `${stackSet}|${stack}`;
     }
 
-    async function createStack(name: string): Promise<ESStack> {
+    async function getStack(stackSet: string, stackName: string): Promise<ESStack> {
+        return stacks.get(name(stackSet, stackName));
+    }
+
+    async function createStack(stackSet: string, stackName: string): Promise<ESStack> {
+        const _name = name(stackSet, stackName);
         const stack = createDDBStack({
             ddb,
-            namespace: name,
+            namespace: _name,
             tablename,
         });
-        stacks.set(name, stack);
+        stacks.set(_name, stack);
         return stack;
     }
 
-    async function getOrCreateStack(name: string): Promise<ESStack> {
-        const existingStack = await getStack(name);
+    async function getOrCreateStack(stackSet: string, stackName: string): Promise<ESStack> {
+        const existingStack = await getStack(stackSet, stackName);
         return existingStack
             ? existingStack
-            : await createStack(name);
+            : await createStack(stackSet, stackName);
     }
 
     return {

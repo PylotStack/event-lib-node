@@ -225,7 +225,7 @@ export async function executeAction(stack: ESStack, action: ActionDefinition, ac
     };
 
     async function views<T>(definitions: ViewDefinition[]): Promise<T> {
-        const viewResults = await compileDetailedViews(stack, definitions, knownEventId);
+        const viewResults = await compileDetailedViews(stack, definitions, knownEventId ? knownEventId + 1 : undefined);
         knownEventId = viewResults.lastEventId;
         return viewResults.view;
     }
@@ -252,13 +252,13 @@ export function esRepository(store: LocalStore, context?: RepositoryContext): Re
     };
 
     async function findOrCreateModel<T, ActionKeywords extends string>(id: string, model: ModelBuilder<T, ActionKeywords>): Promise<T & BaseModel<T> | undefined> {
-        const stack = await store.getOrCreateStack(`${model.definition.esDefinition.type}(${id})`);
+        const stack = await store.getOrCreateStack(model.definition.esDefinition.type, id);
         const modelInstance = await model.fromStack(stack, context);
         return modelInstance;
     }
 
     async function findOrCreateView<T>(id: string, view: BaseViewBuilder<T>): Promise<T | undefined> {
-        const stack = await store.getOrCreateStack(`${view.definition.esDefinition.type}(${id})`);
+        const stack = await store.getOrCreateStack(view.definition.esDefinition.type, id);
         const modelInstance = await compileView(stack, view.definition, context);
         return modelInstance;
     }
