@@ -1,6 +1,11 @@
 import * as _ from "lodash";
 import { localViewCache } from "./local";
-import { ActionDefinition, ActionHandlerContext, ActionHandlerEnum, ActionHandlerResult, DetailedView, ESEvent, EventStackBuilder, EventStackDefinition, ESStack, LocalStore, MapView, ModelBuilder, ModelDefinition, ModelMapContext, ViewBuilder, ViewDefinition, Repository, BaseViewBuilder, BaseModel, RepositoryContext } from "./types";
+import {
+    ActionDefinition, ActionHandlerContext, ActionHandlerEnum, ActionHandlerResult, DetailedView,
+    ESEvent, EventStackBuilder, EventStackDefinition, ESStack, LocalStore, MapView, ModelBuilder,
+    ModelDefinition, ModelMapContext, ViewBuilder, ViewDefinition, Repository, BaseViewBuilder,
+    BaseModel, RepositoryContext,
+} from "./types";
 
 
 function createView<T = any>(type: string, esDefinition: EventStackDefinition, defaultObj?: T): ViewBuilder<T> {
