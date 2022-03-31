@@ -42,6 +42,17 @@ export const bankAccountBalance = bankAccount
         };
     });
 
+export const depositsGreaterThanQuery = bankAccount
+    .createQuery<{ amount: number }>("deposits_greater_than", { deposits: [] })
+    .event("DEPOSIT", (stack, ev, parameters) => {
+        if (ev.payload.amount <= parameters.amount) return stack;
+
+        return {
+            ...stack,
+            deposits: [...stack.deposits, ev.payload],
+        };
+    });
+
 export const bankAccountStatus = bankAccount
     .createView<BankAccountStatusView>("status", { status: { suspended: false } })
     .event("SUSPEND", (stack, ev) => {

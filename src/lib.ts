@@ -4,9 +4,57 @@ import {
     ActionDefinition, ActionHandlerContext, ActionHandlerEnum, ActionHandlerResult, DetailedView,
     ESEvent, EventStackBuilder, EventStackDefinition, ESStack, LocalStore, MapView, ModelBuilder,
     ModelDefinition, ModelMapContext, ViewBuilder, ViewDefinition, Repository, BaseViewBuilder,
-    BaseModel, RepositoryContext,
+    BaseModel, RepositoryContext, QueryBuilder, QueryDefinition, BaseQueryBuilder, ViewEventBuilderHandler,
 } from "./types";
 
+
+//////
+
+function createQuery<T = any, ParameterType = any>(type: string, esDefinition: EventStackDefinition, defaultObj?: T): QueryBuilder<T, undefined, ParameterType> {
+    const self = {} as QueryBuilder<T, undefined, ParameterType>;
+    const definition: QueryDefinition<T, ParameterType> = {
+        type,
+        esDefinition,
+        default: defaultObj,
+        baseViews: [],
+        events: {},
+        finalizer: undefined,
+    };
+    return Object.assign(self, {
+        definition,
+        event: (type: string, handler) => {
+            definition.events[type] = {
+                type,
+                handler,
+            };
+            return self;
+        },
+        finalizer: (handler) => {
+            definition.finalizer = handler;
+            return self;
+        },
+        withView: <U>(otherDefinition: ViewDefinition<U>) => {
+            definition.baseViews.push(otherDefinition);
+            return self as QueryBuilder<T & U, undefined, ParameterType>;
+        }
+    } as QueryBuilder<T, undefined, ParameterType>);
+}
+
+export async function compileQuery<T = null, U = null>(stack: ESStack, query: QueryDefinition<T, U>, parameters: U, context?: RepositoryContext): Promise<T> {
+    const mappedEvents = Object.fromEntries(Object.entries(query.events).map(([type, event]) => {
+        return [type, {
+            type,
+            handler: (state: T, ev: ESEvent) => event.handler(state, ev, parameters) as ViewEventBuilderHandler<T>
+        }];
+    }));
+    const viewDefinition: ViewDefinition<T> = {
+        ...query,
+        events: mappedEvents,
+    }
+    return (await compileDetailedViews(stack, [viewDefinition], undefined, context)).view;
+}
+
+//////
 
 function createView<T = any>(type: string, esDefinition: EventStackDefinition, defaultObj?: T): ViewBuilder<T> {
     const self = {} as ViewBuilder<T>;
@@ -108,6 +156,7 @@ export function defineEventStack(type: string): EventStackBuilder<null> {
         type,
         actions: {},
         views: {},
+        queries: {},
     };
     return Object.assign(self, {
         definition: definition,
@@ -122,6 +171,11 @@ export function defineEventStack(type: string): EventStackBuilder<null> {
             const view = createView<T>(type, definition, defaultObj);
             definition.views[type] = view.definition;
             return view;
+        },
+        createQuery: <T = any, ParameterType = any>(type: string, defaultObj?: T) => {
+            const query = createQuery<T, ParameterType>(type, definition, defaultObj);
+            definition.queries[type] = query.definition;
+            return query;
         },
         mapModel: <T>(mapper: (ctx: ModelMapContext) => T) => {
             const modelDefinition: ModelDefinition<T, null> = {
@@ -268,8 +322,15 @@ export function esRepository(store: LocalStore, context?: RepositoryContext): Re
         return modelInstance;
     }
 
+    async function findOrCreateQuery<T, U>(id: string, query: BaseQueryBuilder<T, U>, parameters: U): Promise<T | undefined> {
+        const stack = await store.getOrCreateStack(query.definition.esDefinition.type, id);
+        const modelInstance = await compileQuery(stack, query.definition, parameters, context);
+        return modelInstance;
+    }
+
     return {
         findOrCreateModel,
         findOrCreateView,
+        findOrCreateQuery,
     };
 }

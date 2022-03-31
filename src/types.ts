@@ -43,6 +43,42 @@ export interface DetailedView<T> {
     lastImpactedId: number | null;
 }
 
+//////// 
+
+export type QueryEventBuilderHandler<QueryType = any, ParameterType = any> = (state: QueryType, ev: ESEvent, parameters: ParameterType) => any;
+
+
+export interface QueryEventBuilderDefinition<QueryType = any, ParameterType = any> {
+    type: string;
+    handler: QueryEventBuilderHandler<QueryType, ParameterType>;
+}
+
+export interface QueryDefinition<QueryType = any, ParameterType = any> {
+    esDefinition: EventStackDefinition;
+    type: string;
+    default: QueryType;
+    events: Record<string, QueryEventBuilderDefinition<QueryType, ParameterType>>;
+    baseViews: ViewDefinition[];
+    finalizer: ViewFinalizerHandler<QueryType>;
+}
+
+
+export interface BaseQueryBuilder<T = any, U = any> {
+    definition: QueryDefinition<T, U>;
+}
+export interface PostEventQueryBuilder<T = any, U extends string = null, V = any> extends BaseQueryBuilder<T, V> {
+    definition: QueryDefinition<T, V>;
+    event: (type: U, handler: QueryEventBuilderHandler<T, V>) => PostEventQueryBuilder<T, U, V>;
+    finalizer: (handler: ViewFinalizerHandler<T>) => BaseQueryBuilder<T>;
+}
+
+export interface QueryBuilder<T = any, U extends string = null, W = any> extends PostEventQueryBuilder<T, U, W> {
+    withView: <V>(viewDefinition: ViewDefinition<V>) => QueryBuilder<T & V, U, W>;
+}
+
+
+/////
+
 export interface ViewEventBuilderDefinition<ViewType = any> {
     type: string;
     handler: ViewEventBuilderHandler<ViewType>;
@@ -72,6 +108,7 @@ export interface EventStackDefinition<T extends string = null> {
     type: string;
     actions: Record<T, ActionDefinition>;
     views: Record<string, ViewDefinition>;
+    queries: Record<string, QueryDefinition>;
 }
 
 export interface BaseViewBuilder<T = any> {
@@ -115,6 +152,7 @@ export interface ModelBuilder<T, ActionKeywords extends string> {
 export interface Repository {
     findOrCreateModel: <T, U extends string>(id: string, model: ModelBuilder<T, U>) => Promise<T & BaseModel<T> | undefined>,
     findOrCreateView: <T>(id: string, view: BaseViewBuilder<T>) => Promise<T | undefined>,
+    findOrCreateQuery: <T, U>(id: string, view: BaseQueryBuilder<T, U>, parameters: U) => Promise<T | undefined>,
 }
 
 
@@ -122,6 +160,7 @@ export interface EventStackBuilder<T extends string = null> {
     definition: EventStackDefinition<T>;
     action: <U extends string>(type: U, handler: ActionHandler | AsyncActionHandler) => EventStackBuilder<T | U>;
     createView: <U = any>(type: string, defaultObj?: U) => ViewBuilder<U, T>;
+    createQuery: <U = any, W = any>(type: string, defaultObj?: W, parameters?: U) => QueryBuilder<W, T, U>;
     mapModel: <U>(mapper: (ctx: ModelMapContext<T>) => U) => ModelBuilder<U, T>;
 }
 

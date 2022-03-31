@@ -1,15 +1,16 @@
 import { localStack } from "./local";
-import { executeAction, compileView } from "./lib";
-import { EventStackDefinition, ViewDefinition, ActionHandlerEnum } from "./types";
+import { executeAction, compileView, compileQuery } from "./lib";
+import { EventStackDefinition, ViewDefinition, ActionHandlerEnum, QueryDefinition } from "./types";
 import * as _ from "lodash";
 import * as assert from "assert";
 
-export interface BaseStackTestBuilder<T extends string = null>  {
+export interface BaseStackTestBuilder<T extends string = null> {
     withEvents(events: Array<Record<string, any>>): StackTestBuilder<T>;
     onAction(actionType: T, payload: Record<string, any>): StackTestBuilder<T>;
     commit(): StackTestBuilder<T>;
     reject(errorType?: string): StackTestBuilder<T>;
     assertView(view: ViewDefinition, expectedModel: any): StackTestBuilder<T>;
+    assertQuery<Model, U>(query: QueryDefinition<Model, U>, parameters: U, expectedModel: any): StackTestBuilder<T>;
     test(): Promise<void>;
 }
 
@@ -26,6 +27,7 @@ export function stack<T extends string = null>(stackDef: EventStackDefinition<T>
     function createTestCase() {
         return {
             expectedViews: [],
+            expectedQueries: [],
         };
     }
 
@@ -61,6 +63,11 @@ export function stack<T extends string = null>(stackDef: EventStackDefinition<T>
             testCase.expectedViews.push({ definition: view, state: expectedModel });
             return self;
         },
+        assertQuery<T, U>(query: QueryDefinition<T, U>, parameters: U, expectedModel: any) {
+            const testCase = lastTestCase();
+            testCase.expectedQueries.push({ definition: query, state: expectedModel, parameters });
+            return self;
+        },
         async test() {
             const stack = localStack("test");
             for (let event of definition.baseEvents) {
@@ -82,6 +89,11 @@ export function stack<T extends string = null>(stackDef: EventStackDefinition<T>
                 for (let expectedView of testCase.expectedViews) {
                     const data = await compileView(stack, expectedView.definition);
                     assert.deepStrictEqual(data, expectedView.state);
+                }
+
+                for (let expectedQuery of testCase.expectedQueries) {
+                    const data = await compileQuery(stack, expectedQuery.definition, expectedQuery.parameters);
+                    assert.deepStrictEqual(data, expectedQuery.state);
                 }
 
             }
