@@ -42,8 +42,11 @@ async function getBankAccount() {
     const events = await stack.slice(0);
     console.log(events);
 
+
     const greaterThan15 = await repo.findOrCreateQuery("7891", depositsGreaterThanQuery, { amount: 15 });
     console.log(greaterThan15);
+    const gt152 = await bankAccount2.depositsGreaterThan(15);
+    console.log(gt152);
 }
 
 getBankAccount().catch((err) => console.log(err));

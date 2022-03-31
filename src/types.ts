@@ -68,7 +68,7 @@ export interface BaseQueryBuilder<T = any, U = any> {
 }
 export interface PostEventQueryBuilder<T = any, U extends string = null, V = any> extends BaseQueryBuilder<T, V> {
     definition: QueryDefinition<T, V>;
-    event: (type: U, handler: QueryEventBuilderHandler<T, V>) => PostEventQueryBuilder<T, U, V>;
+    event: <Z extends V>(type: U, handler: QueryEventBuilderHandler<T, Z>) => PostEventQueryBuilder<T, U, Z>;
     finalizer: (handler: ViewFinalizerHandler<T>) => BaseQueryBuilder<T>;
 }
 
@@ -93,15 +93,15 @@ export interface ViewDefinition<ViewType = any> {
     finalizer: ViewFinalizerHandler<ViewType>;
 }
 
-export type ActionHandler = (context: ActionHandlerContext, payload: any) => ActionHandlerResult;
-export type AsyncActionHandler = (context: ActionHandlerContext, payload: any) => Promise<ActionHandlerResult>;
+export type ActionHandler<T = any> = (context: ActionHandlerContext, payload: T) => ActionHandlerResult;
+export type AsyncActionHandler<T = any> = (context: ActionHandlerContext, payload: T) => Promise<ActionHandlerResult>;
 
 export type ViewEventBuilderHandler<ViewType = any> = (state: ViewType, ev: ESEvent) => any;
 export type ViewFinalizerHandler<ViewType = any> = (state: ViewType) => any;
 
-export interface ActionDefinition {
-    type: string;
-    handler: ActionHandler | AsyncActionHandler;
+export interface ActionDefinition<TypeStr extends string = null, T = any> {
+    type: TypeStr;
+    handler: ActionHandler<T> | AsyncActionHandler<T>;
 }
 
 export interface EventStackDefinition<T extends string = null> {
@@ -129,10 +129,13 @@ export type MapView =
     (<T>(viewDefinition: ViewDefinition<T>) => T) &
     (<T, U extends keyof T>(viewDefinition: ViewDefinition<T>, property: U) => T[U]) &
     (<T, K, U extends (view: T) => any>(viewDefinition: ViewDefinition<T>, transformer: U) => ReturnType<U>);
+export type MapQuery = <QueryModel, QueryParams, HandlerArgs extends (...args: any) => QueryParams>(queryDefinition: QueryDefinition<QueryModel, QueryParams>, handler: HandlerArgs) => ((...args: Parameters<HandlerArgs>) => Promise<QueryModel>);
+
 
 export interface ModelMapContext<ActionKeywords extends string = null> {
     mapAction: MapAction<ActionKeywords>;
     mapView: MapView;
+    mapQuery: MapQuery;
 }
 
 export interface ModelDefinition<T, ActionKeywords extends string> {
@@ -155,12 +158,11 @@ export interface Repository {
     findOrCreateQuery: <T, U>(id: string, view: BaseQueryBuilder<T, U>, parameters: U) => Promise<T | undefined>,
 }
 
-
 export interface EventStackBuilder<T extends string = null> {
     definition: EventStackDefinition<T>;
     action: <U extends string>(type: U, handler: ActionHandler | AsyncActionHandler) => EventStackBuilder<T | U>;
     createView: <U = any>(type: string, defaultObj?: U) => ViewBuilder<U, T>;
-    createQuery: <U = any, W = any>(type: string, defaultObj?: W, parameters?: U) => QueryBuilder<W, T, U>;
+    createQuery: <W = any>(type: string, defaultObj?: W) => QueryBuilder<W, T, any>;
     mapModel: <U>(mapper: (ctx: ModelMapContext<T>) => U) => ModelBuilder<U, T>;
 }
 

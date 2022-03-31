@@ -43,8 +43,8 @@ export const bankAccountBalance = bankAccount
     });
 
 export const depositsGreaterThanQuery = bankAccount
-    .createQuery<{ amount: number }>("deposits_greater_than", { deposits: [] })
-    .event("DEPOSIT", (stack, ev, parameters) => {
+    .createQuery("deposits_greater_than", { deposits: [] })
+    .event("DEPOSIT", (stack, ev, parameters: { amount: number }) => {
         if (ev.payload.amount <= parameters.amount) return stack;
 
         return {
@@ -70,6 +70,7 @@ export const bankAccountModel = bankAccount.mapModel((ctx) => {
         deposit: ctx.mapAction("DEPOSIT", (amount: number) => ({ amount })),
         withdraw: ctx.mapAction("WITHDRAW", (amount: number) => ({ amount })),
         suspend: ctx.mapAction("SUSPEND", (suspend: boolean) => ({ suspended: suspend })),
+        depositsGreaterThan: ctx.mapQuery(depositsGreaterThanQuery.definition, (amount: number) => ({ amount })),
         balance: ctx.mapView(bankAccountBalance.definition, "balance"),
         balanceView: ctx.mapView(bankAccountBalance.definition),
         balanceTransformer: ctx.mapView(bankAccountBalance.definition, (x) => x.balance.toString()),

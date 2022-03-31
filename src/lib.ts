@@ -4,7 +4,7 @@ import {
     ActionDefinition, ActionHandlerContext, ActionHandlerEnum, ActionHandlerResult, DetailedView,
     ESEvent, EventStackBuilder, EventStackDefinition, ESStack, LocalStore, MapView, ModelBuilder,
     ModelDefinition, ModelMapContext, ViewBuilder, ViewDefinition, Repository, BaseViewBuilder,
-    BaseModel, RepositoryContext, QueryBuilder, QueryDefinition, BaseQueryBuilder, ViewEventBuilderHandler,
+    BaseModel, RepositoryContext, QueryBuilder, QueryDefinition, BaseQueryBuilder, ViewEventBuilderHandler, MapQuery,
 } from "./types";
 
 
@@ -124,6 +124,13 @@ function createModelBuilder<T, ActionKeywords extends string>(definition: ModelD
                 return symbol;
             }) as MapView;
 
+            const mapQuery : MapQuery = <T, U>(queryDefinition: QueryDefinition<T, U>, handler) => {
+                return async function _invokeQuery(...args) {
+                    const parameters = handler(...args as any);
+                    return await compileQuery(stack, queryDefinition, parameters, context);
+                };
+            };
+
             const ctx: ModelMapContext = {
                 mapAction: (actionType: string, handler) => {
                     return async function _invokeAction(...args) {
@@ -133,6 +140,7 @@ function createModelBuilder<T, ActionKeywords extends string>(definition: ModelD
                     };
                 },
                 mapView,
+                mapQuery,
             };
 
             const baseModel: BaseModel<T> = {
