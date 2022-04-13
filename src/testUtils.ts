@@ -77,7 +77,8 @@ export function stack<T extends string = null>(stackDef: EventStackDefinition<T>
                 if (testCase.actionType) {
                     const res = await executeAction(stack, stackDef.actions[testCase.actionType], testCase.payload).catch((err) => err);
                     if (testCase.expectedActionResult) {
-                        if (testCase.expectedActionResult === ActionHandlerEnum.COMMIT && res?.action) throw new Error(`Expected result to be ${ActionHandlerEnum.COMMIT} but instead received ${res?.action}`);
+
+                        if (testCase.expectedActionResult === ActionHandlerEnum.COMMIT && res?.action) throw new Error(`Expected result to be ${ActionHandlerEnum.COMMIT} but instead received ${res?.action} (${res?.result})`);
                         if (testCase.expectedActionResult === ActionHandlerEnum.COMMIT && res) throw res;
                         if (testCase.expectedActionResult === ActionHandlerEnum.REJECT && !res) throw new Error(`Expected result to be ${ActionHandlerEnum.REJECT} but instead received ${ActionHandlerEnum.COMMIT}`);
                         if (testCase.expectedActionResult === ActionHandlerEnum.REJECT && !res.action) throw res;
@@ -92,7 +93,7 @@ export function stack<T extends string = null>(stackDef: EventStackDefinition<T>
                 }
 
                 for (let expectedQuery of testCase.expectedQueries) {
-                    const data = await compileQuery(stack, expectedQuery.definition, expectedQuery.parameters);
+                    const data = (await compileQuery(stack, expectedQuery.definition, expectedQuery.parameters)).view;
                     assert.deepStrictEqual(data, expectedQuery.state);
                 }
 

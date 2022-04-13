@@ -10,19 +10,22 @@ interface BankAccountStatusView {
     };
 }
 
+export const xxx = defineEventStack("test")
+    .action("test", (context, payload: { amount: number }) => context.commit());
+
 export const bankAccount = defineEventStack("bank_account")
-    .action("DEPOSIT", async function (context, payload) {
+    .action("DEPOSIT", async function (context, payload: { amount: number }) {
         const account = await context.views<BankAccountStatusView>([bankAccountStatus.definition]);
         if (account.status.suspended) return context.reject("ACCOUNT_SUSPENDED");
         if (payload.amount <= 0) return context.reject("AMOUNT_BELOW_ZERO");
         return context.commit();
-    }).action("WITHDRAW", async function (context, payload) {
+    }).action("WITHDRAW", async function (context, payload: { amount: number }) {
         if (payload.amount <= 0) return context.reject("AMOUNT_BELOW_ZERO");
         const account = await context.views<BankAccountBalanceView & BankAccountStatusView>([bankAccountBalance.definition, bankAccountStatus.definition]);
         if (account.status.suspended) return context.reject("ACCOUNT_SUSPENDED");
         if (account.balance < payload.amount) return context.reject("ACCOUNT_BALANCE_LOW");
         return context.commit();
-    }).action("SUSPEND", async function (context, payload) {
+    }).action("SUSPEND", async function (context, payload: { suspended: boolean }) {
         const view = await context.view(bankAccountStatus.definition);
         if (view.status.suspended === payload.suspended) return context.reject("NO_SUSPEND_CHANGE");
         return context.commit();
@@ -68,6 +71,7 @@ export const bankAccountStatus = bankAccount
 export const bankAccountModel = bankAccount.mapModel((ctx) => {
     return {
         deposit: ctx.mapAction("DEPOSIT", (amount: number) => ({ amount })),
+        deposit2: ctx.mapAction("SUSPEND", (suspended: boolean) => ({ suspended })),
         withdraw: ctx.mapAction("WITHDRAW", (amount: number) => ({ amount })),
         suspend: ctx.mapAction("SUSPEND", (suspend: boolean) => ({ suspended: suspend })),
         depositsGreaterThan: ctx.mapQuery(depositsGreaterThanQuery.definition, (amount: number) => ({ amount })),

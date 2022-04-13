@@ -40,7 +40,7 @@ function createQuery<T = any, ParameterType = any>(type: string, esDefinition: E
     } as QueryBuilder<T, undefined, ParameterType>);
 }
 
-export async function compileQuery<T = null, U = null>(stack: ESStack, query: QueryDefinition<T, U>, parameters: U, context?: RepositoryContext): Promise<T> {
+export async function compileQuery<T = null, U = null>(stack: ESStack, query: QueryDefinition<T, U>, parameters: U, maxEventId?: number, context?: RepositoryContext): Promise<DetailedView<T>> {
     const mappedEvents = Object.fromEntries(Object.entries(query.events).map(([type, event]) => {
         return [type, {
             type,
@@ -51,7 +51,7 @@ export async function compileQuery<T = null, U = null>(stack: ESStack, query: Qu
         ...query,
         events: mappedEvents,
     }
-    return (await compileDetailedViews(stack, [viewDefinition], undefined, context)).view;
+    return (await compileDetailedViews(stack, [viewDefinition], maxEventId, context));
 }
 
 //////
@@ -124,10 +124,10 @@ function createModelBuilder<T, ActionKeywords extends string>(definition: ModelD
                 return symbol;
             }) as MapView;
 
-            const mapQuery : MapQuery = <T, U>(queryDefinition: QueryDefinition<T, U>, handler) => {
+            const mapQuery: MapQuery = <T, U>(queryDefinition: QueryDefinition<T, U>, handler) => {
                 return async function _invokeQuery(...args) {
                     const parameters = handler(...args as any);
-                    return await compileQuery(stack, queryDefinition, parameters, context);
+                    return (await compileQuery(stack, queryDefinition, parameters, undefined, context)).view;
                 };
             };
 
@@ -158,8 +158,8 @@ function createModelBuilder<T, ActionKeywords extends string>(definition: ModelD
     }
 }
 
-export function defineEventStack(type: string): EventStackBuilder<null> {
-    const self = {} as EventStackBuilder<null>;
+export function defineEventStack(type: string): EventStackBuilder<{}, null> {
+    const self = {} as EventStackBuilder<{}, null>;
     const definition: EventStackDefinition = {
         type,
         actions: {},
@@ -173,7 +173,7 @@ export function defineEventStack(type: string): EventStackBuilder<null> {
                 type,
                 handler,
             };
-            return self as EventStackBuilder<U>;
+            return self as EventStackBuilder;
         },
         createView: <T>(type: string, defaultObj?: T) => {
             const view = createView<T>(type, definition, defaultObj);
@@ -301,10 +301,17 @@ export async function executeAction(stack: ESStack, action: ActionDefinition, ac
         return await views<T>([definition]);
     }
 
+    async function query<T, U>(definition: QueryDefinition<T, U>, parameters: U): Promise<T> {
+        const queryResult = await compileQuery(stack, definition, parameters, knownEventId ? knownEventId + 1 : undefined);
+        knownEventId = queryResult.lastEventId;
+        return queryResult.view;
+    }
+
     const context: ActionHandlerContext = {
         ...baseContext,
         views,
         view,
+        query,
     };
 
     const result = await action.handler(context, actionPayload);
@@ -332,7 +339,7 @@ export function esRepository(store: LocalStore, context?: RepositoryContext): Re
 
     async function findOrCreateQuery<T, U>(id: string, query: BaseQueryBuilder<T, U>, parameters: U): Promise<T | undefined> {
         const stack = await store.getOrCreateStack(query.definition.esDefinition.type, id);
-        const modelInstance = await compileQuery(stack, query.definition, parameters, context);
+        const modelInstance = (await compileQuery(stack, query.definition, parameters, undefined, context)).view;
         return modelInstance;
     }
 
