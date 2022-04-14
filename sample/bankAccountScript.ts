@@ -1,8 +1,5 @@
-import * as Redis from "ioredis";
-import { redisViewCache } from "../src/redis";
 import { esRepository } from "../src/lib";
 import { localStore, localViewCache } from "../src/local";
-import { ddbStore, ddbViewCache } from "../src/ddb";
 import { localStack } from "../src/local";
 import { bankAccountModel, depositsGreaterThanQuery } from "./bankAccount";
 

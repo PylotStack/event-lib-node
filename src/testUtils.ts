@@ -1,8 +1,8 @@
 import { localStack } from "./local";
 import { executeAction, compileView, compileQuery } from "./lib";
 import { EventStackDefinition, ViewDefinition, ActionHandlerEnum, QueryDefinition } from "./types";
-import * as _ from "lodash";
 import * as assert from "assert";
+import { last } from "./utils";
 
 export interface BaseStackTestBuilder<T extends string = null> {
     withEvents(events: Array<Record<string, any>>): StackTestBuilder<T>;
@@ -32,7 +32,7 @@ export function stack<T extends string = null>(stackDef: EventStackDefinition<T>
     }
 
     function lastTestCase() {
-        return _.last(definition.testCases) ?? createTestCase();
+        return last(definition.testCases) ?? createTestCase();
     }
 
     return Object.assign(self, {

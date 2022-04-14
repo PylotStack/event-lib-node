@@ -1,4 +1,4 @@
-import * as _ from "lodash";
+import { uniq } from "./utils";
 import { localViewCache } from "./local";
 import {
     ActionDefinition, ActionHandlerContext, ActionHandlerEnum, ActionHandlerResult, DetailedView,
@@ -98,7 +98,7 @@ function createModelBuilder<T, ActionKeywords extends string>(definition: ModelD
                     if (!mapViewMemory[value]) return;
                     return [key, mapViewMemory[value]];
                 }).filter(Boolean);
-                const viewsToPull = _.uniq(keysToUpdate.map(([key, value]) => value.viewDefinition));
+                const viewsToPull = uniq(keysToUpdate.map(([key, value]) => value.viewDefinition));
                 const viewResults = await Promise.all(viewsToPull.map(async (view) => [view, await compileView(stack, view, context)]));
                 const viewMap = new Map<any, any>(viewResults as Array<[any, any]>);
                 keysToUpdate.forEach(function updateValues([key, value]) {
