@@ -1,6 +1,6 @@
 {
   "name": "@sctrl/event-stack",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A library for create event sourced applications",
   "main": "dist/index.js",
   "scripts": {
@@ -8,7 +8,10 @@
     "tsc": "tsc",
     "watch": "npm run tsc -- -w --preserveWatchOutput"
   },
-  "keywords": ["event sourcing", "event source"],
+  "keywords": [
+    "event sourcing",
+    "event source"
+  ],
   "author": "undecidedapollo",
   "license": "MIT",
   "devDependencies": {
