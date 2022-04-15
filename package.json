@@ -22,5 +22,9 @@
   "dependencies": {},
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "url": "https://github.com/sctrl-hq/event-lib-node",
+    "type": "git"
   }
 }
