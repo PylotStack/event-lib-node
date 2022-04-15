@@ -1,5 +1,4 @@
 import { localStore } from "../src/local";
-import { ddbStore } from "../src/ddb";
 import { defineEventStack, esRepository } from "../src/lib";
 
 interface UserSummaryView {
