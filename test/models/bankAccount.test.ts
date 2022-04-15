@@ -1,5 +1,5 @@
 import "jest";
-import { stack } from "../src/testUtils";
+import { stack } from "../../src/testUtils";
 import { bankAccount, bankAccountBalance } from "./bankAccount";
 
 it("Should deposit 10, reject withdraw 15, commit withdraw 5",

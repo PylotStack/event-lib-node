@@ -1,3 +1,5 @@
 src
 .vscode
 sample
+coverage
+.nyc_output
