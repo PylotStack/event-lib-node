@@ -1,7 +1,7 @@
 import { localViewCache } from "../storage/local";
-import {createView, compileDetailedViews, compileView} from "./view";
+import { createView, compileDetailedViews, compileView, eval_step, initFlowState } from "./view";
 import {
-    ActionDefinition, ActionHandlerContext, ActionHandlerEnum, ActionHandlerResult, 
+    ActionDefinition, ActionHandlerContext, ActionHandlerEnum, ActionHandlerResult,
     EventStackBuilder, EventStackDefinition, ESStack, LocalStore, ModelBuilder,
     ModelDefinition, ModelMapContext, ViewDefinition, Repository, BaseViewBuilder,
     BaseModel, RepositoryContext, QueryDefinition, BaseQueryBuilder,
@@ -29,6 +29,12 @@ export function defineEventStack(type: string): EventStackBuilder<{}, null> {
         createView: <T>(type: string, defaultObj?: T) => {
             const view = createView<T>(type, definition, defaultObj);
             definition.views[type] = view.definition;
+            return view;
+        },
+        createFlow: <T>(type: string, flowDefinition: any) => {
+            const view = createView<T>(type, definition, initFlowState(flowDefinition));
+            definition.views[type] = view.definition;
+            view.flow(flowDefinition);
             return view;
         },
         createQuery: <T = any, ParameterType = any>(type: string, defaultObj?: T) => {

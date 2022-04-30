@@ -43,6 +43,7 @@ export async function compileQuery<T = null, U = null>(stack: ESStack, query: Qu
     }));
     const viewDefinition: ViewDefinition<T> = {
         ...query,
+        flows: [],
         events: mappedEvents,
     }
     return (await compileDetailedViews(stack, [viewDefinition], maxEventId, context));
