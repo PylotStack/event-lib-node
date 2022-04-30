@@ -1,13 +1,9 @@
 import { esRepository } from "../src/lib";
-import { localStore, localViewCache } from "../src/local";
-import { localStack } from "../src/local";
+import { local } from "../src";
 import { bankAccountModel, depositsGreaterThanQuery } from "./bankAccount";
 
 async function getBankAccount() {
-    const _localViewCache = localViewCache();
-
-
-    const store = localStore();
+    const store = local.localStore();
     const repo = esRepository(store, {});
 
     const bankAccount2 = await repo.findOrCreateModel("7891", bankAccountModel);

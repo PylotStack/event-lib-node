@@ -1,5 +1,4 @@
-import { localStore } from "../src/local";
-import { defineEventStack, esRepository } from "../src/lib";
+import { defineEventStack } from "../src/lib";
 
 interface UserSummaryView {
     isRegistered: boolean;

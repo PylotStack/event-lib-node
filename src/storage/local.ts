@@ -1,5 +1,5 @@
-import { last } from "./utils";
-import { CompiledView, ESEvent, ESStack, LocalStore, ViewCache, ViewDefinition } from "./types";
+import { last } from "../utils";
+import { CompiledView, ESEvent, ESStack, LocalStore, ViewCache, ViewDefinition } from "../types";
 
 export function localStack(namespace: string): ESStack {
     const events: ESEvent[] = [];

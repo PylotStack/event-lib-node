@@ -1,4 +1,4 @@
-import { localStack } from "./local";
+import { localStack } from "./storage/local";
 import { executeAction, compileView, compileQuery } from "./lib";
 import { EventStackDefinition, ViewDefinition, ActionHandlerEnum, QueryDefinition } from "./types";
 import * as assert from "assert";

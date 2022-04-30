@@ -1,10 +1,10 @@
 import { personMovieRentals, currentlyRentedMoviesView } from "./1_movieRental";
 import { compileView, executeAction } from "../../src/lib";
-import { localStack } from "../../src/local";
+import { local } from "../../src";
 
 async function main() {
     // Create a locally stored (RAM) event stack
-    const movie_rental_account_stack = localStack("teststack");
+    const movie_rental_account_stack = local.localStack("teststack");
 
     // Generate the view state from the event stack we recently created which is empty. Notice how the view returns no items
     const result = await compileView(movie_rental_account_stack, currentlyRentedMoviesView.definition);
