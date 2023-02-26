@@ -7,6 +7,9 @@ import {
 } from "../types";
 import { uniq } from "../utils";
 
+
+// TODO: Map deferred view -> async getter
+
 export function createModelBuilder<T, ActionKeywords extends string>(definition: ModelDefinition<T, ActionKeywords>): ModelBuilder<T, ActionKeywords> {
     return {
         definition,

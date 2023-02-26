@@ -25,7 +25,11 @@ export function eval_step(flowDefinition, flowState, trigger) {
                 return flow.action.constant.value;
             }
             if (flow.action.add) {
-                return acc + trigger.eventData[flow.action.add.property];
+                if(flow.action.add.property) {
+                    return acc + trigger.eventData[flow.action.add.property];
+                } else {
+                    return acc + flow.action.add.value;
+                }
             }
             if (flow.action.subtract) {
                 return acc - trigger.eventData[flow.action.subtract.property];
@@ -174,6 +178,32 @@ export const flow = {
             });
         }
 
+        function increment<T>(step: number, context: any = self) {
+            const self2 = {};
+            if (!context[FLOW_SYMBOL].builderCurrentTrigger) throw new Error(`Expected builder to be in action.`);
+
+            return Object.assign(self2, {
+                [FLOW_SYMBOL]: {
+                    ...context[FLOW_SYMBOL],
+                    builderCurrentTrigger: undefined,
+                    flows: [
+                        ...(context[FLOW_SYMBOL].flows ?? []),
+                        {
+                            trigger: context[FLOW_SYMBOL].builderCurrentTrigger.triggerType,
+                            events: context[FLOW_SYMBOL].builderCurrentTrigger.events,
+                            condition: context[FLOW_SYMBOL].builderCurrentTrigger.condition,
+                            action: {
+                                "add": {
+                                    value: step,
+                                },
+                            },
+                        },
+                    ],
+                },
+                onEvent: (type: string) => flow.onEvent(type, self2),
+            });
+        }
+
         function _if(condition, context: any = self) {
             const self2 = {};
             if (!context[FLOW_SYMBOL].builderCurrentTrigger) throw new Error(`Expected builder to be in action.`);
@@ -193,6 +223,7 @@ export const flow = {
                 set: (value: any) => set(value, self2),
                 constant: (value: any) => constant(value, self2),
                 add: (property: string) => add(property, self2),
+                increment: (step: number) => increment(step, self2),
                 subtract: (property: string) => subtract(property, self2),
                 onEvent: (type: string) => flow.onEvent(type, self2),
             });
@@ -209,6 +240,7 @@ export const flow = {
             set,
             constant,
             add,
+            increment,
             subtract,
             if: _if,
             onEvent: (type: string) => flow.onEvent(type, self),

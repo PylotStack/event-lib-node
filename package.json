@@ -6,7 +6,11 @@
   "scripts": {
     "test": "jest --coverage",
     "tsc": "tsc",
-    "watch": "npm run tsc -- -w --preserveWatchOutput"
+    "watch": "npm run tsc -- -w --preserveWatchOutput",
+    "package": "npm run package:setup; npm run tsc -- --outDir package",
+    "package:setup": "rm -fdr package; mkdir package; cp -R package.json package-lock.json README.md node_modules package",
+    "package:local": "npm run tsc -- -w --preserveWatchOutput --outDir package",
+    "local": "npm run package:setup; npm run package:local"
   },
   "keywords": [
     "event sourcing",

@@ -156,7 +156,7 @@ export interface ModelBuilder<T, ActionKeywords extends string> {
 }
 
 export interface Repository {
-    findOrCreateModel: <T, U extends string>(id: string, model: ModelBuilder<T, U>) => Promise<T & BaseModel<T> | undefined>,
+    findOrCreateModel: <T, U extends string>(id: string, model: ModelBuilder<T, U>) => Promise<T & BaseModel<T>>,
     findOrCreateView: <T>(id: string, view: BaseViewBuilder<T>) => Promise<T | undefined>,
     findOrCreateQuery: <T, U>(id: string, view: BaseQueryBuilder<T, U>, parameters: U) => Promise<T | undefined>,
 }
