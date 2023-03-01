@@ -1,19 +1,24 @@
 import { compileView } from "./view";
 import { compileQuery } from "./query";
-import { executeAction } from "./lib";
+import { defaultExecutor, executeAction } from "./lib";
 import {
     ModelDefinition, ModelBuilder, ESStack, RepositoryContext, BaseModel,
-    MapView, ViewDefinition, MapQuery, QueryDefinition, ModelMapContext
+    MapView, ViewDefinition, MapQuery, QueryDefinition, ModelMapContext, MapDeferredView, Executor
 } from "../types";
 import { uniq } from "../utils";
 
 
 // TODO: Map deferred view -> async getter
 
+
+
+
+
 export function createModelBuilder<T, ActionKeywords extends string>(definition: ModelDefinition<T, ActionKeywords>): ModelBuilder<T, ActionKeywords> {
     return {
         definition,
         fromStack: async (stack: ESStack, context?: RepositoryContext) => {
+            const executor = context?.executor ?? defaultExecutor();
             const model: T & BaseModel<T> = {} as T & BaseModel<T>;
             const mapViewMemory = {};
 
@@ -23,7 +28,7 @@ export function createModelBuilder<T, ActionKeywords extends string>(definition:
                     return [key, mapViewMemory[value]];
                 }).filter(Boolean);
                 const viewsToPull = uniq(keysToUpdate.map(([key, value]) => value.viewDefinition));
-                const viewResults = await Promise.all(viewsToPull.map(async (view) => [view, await compileView(stack, view, context)]));
+                const viewResults = await Promise.all(viewsToPull.map(async (view) => [view, await executor.compileView(stack, view, context)]));
                 const viewMap = new Map<any, any>(viewResults as Array<[any, any]>);
                 keysToUpdate.forEach(function updateValues([key, value]) {
                     const viewResult = viewMap.get(value.viewDefinition);
@@ -51,19 +56,29 @@ export function createModelBuilder<T, ActionKeywords extends string>(definition:
             const mapQuery: MapQuery = <T, U>(queryDefinition: QueryDefinition<T, U>, handler) => {
                 return async function _invokeQuery(...args) {
                     const parameters = handler(...args as any);
-                    return (await compileQuery(stack, queryDefinition, parameters, undefined, context)).view;
+                    return (await executor.compileQuery(stack, queryDefinition, parameters, undefined, context)).view;
                 };
             };
+
+            const mapDeferredView: MapDeferredView = (<T>(viewDefinition: ViewDefinition<T>, transformer?: any) => {
+                return async function _invokeQuery() {
+                    const result = await executor.compileView(stack, viewDefinition);
+                    if (!transformer) return result;
+                    if (typeof transformer === "string") return result?.[transformer];
+                    return transformer(result);
+                };
+            }) as MapDeferredView;
 
             const ctx: ModelMapContext = {
                 mapAction: (actionType: string, handler) => {
                     return async function _invokeAction(...args) {
                         const payload = handler(...args as any);
-                        await executeAction(stack, definition.esDefinition.actions[actionType], payload);
+                        await executor.executeAction(stack, definition.esDefinition.actions[actionType], payload);
                         await processModel();
                     };
                 },
                 mapView,
+                mapDeferredView,
                 mapQuery,
             };
 

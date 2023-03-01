@@ -102,6 +102,7 @@ export type ViewEventBuilderHandler<ViewType = any> = (state: ViewType, ev: ESEv
 export type ViewFinalizerHandler<ViewType = any> = (state: ViewType) => any;
 
 export interface ActionDefinition<TypeStr extends string = null, T = any> {
+    esDefinition: EventStackDefinition;
     type: TypeStr;
     handler: ActionHandler<T> | AsyncActionHandler<T>;
 }
@@ -132,12 +133,17 @@ export type MapView =
     (<T>(viewDefinition: ViewDefinition<T>) => T) &
     (<T, U extends keyof T>(viewDefinition: ViewDefinition<T>, property: U) => T[U]) &
     (<T, K, U extends (view: T) => any>(viewDefinition: ViewDefinition<T>, transformer: U) => ReturnType<U>);
+export type MapDeferredView =
+    (<T>(viewDefinition: ViewDefinition<T>) => () => Promise<T>) &
+    (<T, U extends keyof T>(viewDefinition: ViewDefinition<T>, property: U) => () => Promise<T[U]>) &
+    (<T, K, U extends (view: T) => any>(viewDefinition: ViewDefinition<T>, transformer: U) => () => Promise<ReturnType<U>>);
 export type MapQuery = <QueryModel, QueryParams, HandlerArgs extends (...args: any) => QueryParams>(queryDefinition: QueryDefinition<QueryModel, QueryParams>, handler: HandlerArgs) => ((...args: Parameters<HandlerArgs>) => Promise<QueryModel>);
 
 
 export interface ModelMapContext<DictType extends Record<ActionKeywords, ActionDefinition> = any, ActionKeywords extends string = null> {
     mapAction: MapAction<DictType, ActionKeywords>;
     mapView: MapView;
+    mapDeferredView: MapDeferredView;
     mapQuery: MapQuery;
 }
 
@@ -182,4 +188,15 @@ export interface ViewCache {
 
 export interface RepositoryContext {
     viewCache?: ViewCache;
+    executor?: Executor;
+}
+
+export type ExecuteAction = (stack: ESStack, action: ActionDefinition, actionPayload: any) => Promise<void>;
+export type CompileView = <T = null>(stack: ESStack, view: ViewDefinition<T>, context?: RepositoryContext) => Promise<T>;
+export type CompileQuery = <T = null, U = null>(stack: ESStack, query: QueryDefinition<T, U>, parameters: U, maxEventId?: number, context?: RepositoryContext) => Promise<DetailedView<T>>;
+
+export interface Executor {
+    executeAction: ExecuteAction;
+    compileView: CompileView;
+    compileQuery: CompileQuery;
 }

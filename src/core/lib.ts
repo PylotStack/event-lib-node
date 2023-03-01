@@ -4,7 +4,7 @@ import {
     ActionDefinition, ActionHandlerContext, ActionHandlerEnum, ActionHandlerResult,
     EventStackBuilder, EventStackDefinition, ESStack, LocalStore, ModelBuilder,
     ModelDefinition, ModelMapContext, ViewDefinition, Repository, BaseViewBuilder,
-    BaseModel, RepositoryContext, QueryDefinition, BaseQueryBuilder,
+    BaseModel, RepositoryContext, QueryDefinition, BaseQueryBuilder, Executor,
 } from "../types";
 import { compileQuery, createQuery } from "./query";
 import { createModelBuilder } from "./model";
@@ -23,7 +23,8 @@ export function defineEventStack(type: string): EventStackBuilder<{}, null> {
             definition.actions[type as string] = {
                 type,
                 handler,
-            };
+                esDefinition: definition,
+            } as ActionDefinition<U>;
             return self as EventStackBuilder;
         },
         createView: <T>(type: string, defaultObj?: T) => {
@@ -151,3 +152,9 @@ export function esRepository(store: LocalStore, context?: RepositoryContext): Re
         findOrCreateQuery,
     };
 }
+
+export const defaultExecutor : (() => Executor)  = () => ({
+    executeAction,
+    compileView,
+    compileQuery,
+});
