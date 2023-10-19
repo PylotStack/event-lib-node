@@ -41,10 +41,12 @@ export async function compileQuery<T = null, U = null>(stack: ESStack, query: Qu
             handler: (state: T, ev: ESEvent) => event.handler(state, ev, parameters) as ViewEventBuilderHandler<T>
         }];
     }));
+    const mappedFinalizer = query.finalizer ? (state: T) => query.finalizer(state, parameters) : undefined;
     const viewDefinition: ViewDefinition<T> = {
         ...query,
         flows: [],
         events: mappedEvents,
+        finalizer: mappedFinalizer,
     }
     return (await compileDetailedViews(stack, [viewDefinition], maxEventId, context));
 }

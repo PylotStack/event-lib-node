@@ -1,5 +1,5 @@
 {
-  "name": "@sctrl/event-stack",
+  "name": "@pylot/event-source",
   "version": "0.1.2",
   "description": "A library for create event sourced applications",
   "main": "dist/index.js",

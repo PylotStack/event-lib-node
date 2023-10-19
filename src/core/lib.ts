@@ -69,8 +69,9 @@ const baseContext = {
     }
 };
 
+const unsearchedEventSymbol = Symbol("unsearchedEventSymbol");
 export async function executeAction(stack: ESStack, action: ActionDefinition, actionPayload: any): Promise<void> {
-    let knownEventId = undefined;
+    let knownEventId: typeof unsearchedEventSymbol | number = unsearchedEventSymbol;
 
     const actionHandler = {
         [ActionHandlerEnum.REJECT]: (result: ActionHandlerResult) => {
@@ -81,7 +82,7 @@ export async function executeAction(stack: ESStack, action: ActionDefinition, ac
         },
         [ActionHandlerEnum.COMMIT]: async (result: ActionHandlerResult) => {
             const payload = result.payloadOverride ?? actionPayload;
-            const newEventId = knownEventId ? knownEventId + 1 : null;
+            const newEventId = knownEventId !== unsearchedEventSymbol ? knownEventId + 1 : null;
             const commitMethod = newEventId ? stack.commitEvent : stack.commitAnonymousEvent;
             await commitMethod({
                 id: newEventId ?? 0,
@@ -95,8 +96,8 @@ export async function executeAction(stack: ESStack, action: ActionDefinition, ac
     };
 
     async function views<T>(definitions: ViewDefinition[]): Promise<T> {
-        const viewResults = await compileDetailedViews(stack, definitions, knownEventId ? knownEventId + 1 : undefined);
-        knownEventId = viewResults.lastEventId;
+        const viewResults = await compileDetailedViews(stack, definitions, knownEventId !== unsearchedEventSymbol ? knownEventId + 1 : undefined);
+        knownEventId = viewResults.lastEventId ?? 0;
         return viewResults.view;
     }
 
@@ -105,8 +106,8 @@ export async function executeAction(stack: ESStack, action: ActionDefinition, ac
     }
 
     async function query<T, U>(definition: QueryDefinition<T, U>, parameters: U): Promise<T> {
-        const queryResult = await compileQuery(stack, definition, parameters, knownEventId ? knownEventId + 1 : undefined);
-        knownEventId = queryResult.lastEventId;
+        const queryResult = await compileQuery(stack, definition, parameters, knownEventId !== unsearchedEventSymbol ? knownEventId + 1 : undefined);
+        knownEventId = queryResult.lastEventId ?? 0;
         return queryResult.view;
     }
 
@@ -153,7 +154,7 @@ export function esRepository(store: LocalStore, context?: RepositoryContext): Re
     };
 }
 
-export const defaultExecutor : (() => Executor)  = () => ({
+export const defaultExecutor: (() => Executor) = () => ({
     executeAction,
     compileView,
     compileQuery,

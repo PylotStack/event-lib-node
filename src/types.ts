@@ -60,17 +60,18 @@ export interface QueryDefinition<QueryType = any, ParameterType = any> {
     default: QueryType;
     events: Record<string, QueryEventBuilderDefinition<QueryType, ParameterType>>;
     baseViews: ViewDefinition[];
-    finalizer: ViewFinalizerHandler<QueryType>;
+    finalizer: QueryFinalizerHandler<QueryType, ParameterType>;
 }
 
+export type QueryFinalizerHandler<QueryType = any, ParameterType = any> = (state: QueryType, params: ParameterType) => any;
 
-export interface BaseQueryBuilder<T = any, U = any> {
-    definition: QueryDefinition<T, U>;
+export interface BaseQueryBuilder<QueryType = any, ParameterType = any> {
+    definition: QueryDefinition<QueryType, ParameterType>;
 }
-export interface PostEventQueryBuilder<T = any, U extends string = null, V = any> extends BaseQueryBuilder<T, V> {
-    definition: QueryDefinition<T, V>;
-    event: <Z extends V>(type: U, handler: QueryEventBuilderHandler<T, Z>) => PostEventQueryBuilder<T, U, Z>;
-    finalizer: (handler: ViewFinalizerHandler<T>) => BaseQueryBuilder<T>;
+export interface PostEventQueryBuilder<QueryType = any, ActionTypeString extends string = null, ParameterType = any> extends BaseQueryBuilder<QueryType, ParameterType> {
+    definition: QueryDefinition<QueryType, ParameterType>;
+    event: <Z extends ParameterType>(type: ActionTypeString, handler: QueryEventBuilderHandler<QueryType, Z>) => PostEventQueryBuilder<QueryType, ActionTypeString, Z>;
+    finalizer: (handler: QueryFinalizerHandler<QueryType, ParameterType>) => BaseQueryBuilder<QueryType, ParameterType>;
 }
 
 export interface QueryBuilder<T = any, U extends string = null, W = any> extends PostEventQueryBuilder<T, U, W> {
