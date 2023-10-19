@@ -60,17 +60,18 @@ export interface QueryDefinition<QueryType = any, ParameterType = any> {
     default: QueryType;
     events: Record<string, QueryEventBuilderDefinition<QueryType, ParameterType>>;
     baseViews: ViewDefinition[];
-    finalizer: ViewFinalizerHandler<QueryType>;
+    finalizer: QueryFinalizerHandler<QueryType, ParameterType>;
 }
 
+export type QueryFinalizerHandler<QueryType = any, ParameterType = any> = (state: QueryType, params: ParameterType) => any;
 
-export interface BaseQueryBuilder<T = any, U = any> {
-    definition: QueryDefinition<T, U>;
+export interface BaseQueryBuilder<QueryType = any, ParameterType = any> {
+    definition: QueryDefinition<QueryType, ParameterType>;
 }
-export interface PostEventQueryBuilder<T = any, U extends string = null, V = any> extends BaseQueryBuilder<T, V> {
-    definition: QueryDefinition<T, V>;
-    event: <Z extends V>(type: U, handler: QueryEventBuilderHandler<T, Z>) => PostEventQueryBuilder<T, U, Z>;
-    finalizer: (handler: ViewFinalizerHandler<T>) => BaseQueryBuilder<T>;
+export interface PostEventQueryBuilder<QueryType = any, ActionTypeString extends string = null, ParameterType = any> extends BaseQueryBuilder<QueryType, ParameterType> {
+    definition: QueryDefinition<QueryType, ParameterType>;
+    event: <Z extends ParameterType>(type: ActionTypeString, handler: QueryEventBuilderHandler<QueryType, Z>) => PostEventQueryBuilder<QueryType, ActionTypeString, Z>;
+    finalizer: (handler: QueryFinalizerHandler<QueryType, ParameterType>) => BaseQueryBuilder<QueryType, ParameterType>;
 }
 
 export interface QueryBuilder<T = any, U extends string = null, W = any> extends PostEventQueryBuilder<T, U, W> {
@@ -89,6 +90,7 @@ export interface ViewDefinition<ViewType = any> {
     esDefinition: EventStackDefinition;
     type: string;
     default: ViewType;
+    flows: any[];
     events: Record<string, ViewEventBuilderDefinition<ViewType>>;
     baseViews: ViewDefinition[];
     finalizer: ViewFinalizerHandler<ViewType>;
@@ -101,6 +103,7 @@ export type ViewEventBuilderHandler<ViewType = any> = (state: ViewType, ev: ESEv
 export type ViewFinalizerHandler<ViewType = any> = (state: ViewType) => any;
 
 export interface ActionDefinition<TypeStr extends string = null, T = any> {
+    esDefinition: EventStackDefinition;
     type: TypeStr;
     handler: ActionHandler<T> | AsyncActionHandler<T>;
 }
@@ -118,6 +121,7 @@ export interface BaseViewBuilder<T = any> {
 export interface PostEventViewBuilder<T = any, U extends string = null> extends BaseViewBuilder<T> {
     definition: ViewDefinition<T>;
     event: (type: U, handler: ViewEventBuilderHandler<T>) => PostEventViewBuilder<T, U>;
+    flow: (flow: any) => PostEventViewBuilder<T, U>;
     finalizer: (handler: ViewFinalizerHandler<T>) => BaseViewBuilder<T>;
 }
 
@@ -130,12 +134,17 @@ export type MapView =
     (<T>(viewDefinition: ViewDefinition<T>) => T) &
     (<T, U extends keyof T>(viewDefinition: ViewDefinition<T>, property: U) => T[U]) &
     (<T, K, U extends (view: T) => any>(viewDefinition: ViewDefinition<T>, transformer: U) => ReturnType<U>);
+export type MapDeferredView =
+    (<T>(viewDefinition: ViewDefinition<T>) => () => Promise<T>) &
+    (<T, U extends keyof T>(viewDefinition: ViewDefinition<T>, property: U) => () => Promise<T[U]>) &
+    (<T, K, U extends (view: T) => any>(viewDefinition: ViewDefinition<T>, transformer: U) => () => Promise<ReturnType<U>>);
 export type MapQuery = <QueryModel, QueryParams, HandlerArgs extends (...args: any) => QueryParams>(queryDefinition: QueryDefinition<QueryModel, QueryParams>, handler: HandlerArgs) => ((...args: Parameters<HandlerArgs>) => Promise<QueryModel>);
 
 
 export interface ModelMapContext<DictType extends Record<ActionKeywords, ActionDefinition> = any, ActionKeywords extends string = null> {
     mapAction: MapAction<DictType, ActionKeywords>;
     mapView: MapView;
+    mapDeferredView: MapDeferredView;
     mapQuery: MapQuery;
 }
 
@@ -154,7 +163,7 @@ export interface ModelBuilder<T, ActionKeywords extends string> {
 }
 
 export interface Repository {
-    findOrCreateModel: <T, U extends string>(id: string, model: ModelBuilder<T, U>) => Promise<T & BaseModel<T> | undefined>,
+    findOrCreateModel: <T, U extends string>(id: string, model: ModelBuilder<T, U>) => Promise<T & BaseModel<T>>,
     findOrCreateView: <T>(id: string, view: BaseViewBuilder<T>) => Promise<T | undefined>,
     findOrCreateQuery: <T, U>(id: string, view: BaseQueryBuilder<T, U>, parameters: U) => Promise<T | undefined>,
 }
@@ -163,6 +172,7 @@ export interface EventStackBuilder<T extends Record<Str, ActionDefinition> = any
     definition: EventStackDefinition<Str>;
     action: <U extends string, V = any>(type: U, handler: ActionHandler<V> | AsyncActionHandler<V>) => EventStackBuilder<T & { [u in U]: V }, Str | U>;
     createView: <U = any>(type: string, defaultObj?: U) => ViewBuilder<U, Str>;
+    createFlow: <U = any>(type: string, flowDefinition: any) => ViewBuilder<U, Str>;
     createQuery: <W = any>(type: string, defaultObj?: W) => QueryBuilder<W, Str, any>;
     mapModel: <U>(mapper: (ctx: ModelMapContext<T, Str>) => U) => ModelBuilder<U, Str>;
 }
@@ -179,4 +189,15 @@ export interface ViewCache {
 
 export interface RepositoryContext {
     viewCache?: ViewCache;
+    executor?: Executor;
+}
+
+export type ExecuteAction = (stack: ESStack, action: ActionDefinition, actionPayload: any) => Promise<void>;
+export type CompileView = <T = null>(stack: ESStack, view: ViewDefinition<T>, context?: RepositoryContext) => Promise<T>;
+export type CompileQuery = <T = null, U = null>(stack: ESStack, query: QueryDefinition<T, U>, parameters: U, maxEventId?: number, context?: RepositoryContext) => Promise<DetailedView<T>>;
+
+export interface Executor {
+    executeAction: ExecuteAction;
+    compileView: CompileView;
+    compileQuery: CompileQuery;
 }

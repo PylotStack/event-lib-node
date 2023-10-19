@@ -1,9 +1,9 @@
-import { localStore } from "../src/local";
+import { local } from "../src/index";
 import { esRepository } from "../src/lib";
 import { publicUserProfile, userProfileModel } from "./userProfile";
 
 async function user() {
-    const store = localStore();
+    const store = local.localStore();
     const repo = esRepository(store, {});
 
     const user = await repo.findOrCreateModel("a@a.com", userProfileModel);

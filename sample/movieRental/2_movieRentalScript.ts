@@ -1,9 +1,9 @@
 import { personMovieRentalsModel } from "./1_movieRental";
-import { localStack } from "../../src/local";
+import { local } from "../../src";
 
 async function main() {
     // Create a locally stored (RAM) event stack
-    const movie_rental_account_stack = localStack("teststack");
+    const movie_rental_account_stack = local.localStack("teststack");
 
     // Create a model from our event stack which is empty. Notice how the view returns no items
     const personMovieRentals = await personMovieRentalsModel.fromStack(movie_rental_account_stack, undefined);

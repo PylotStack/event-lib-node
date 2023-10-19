@@ -71,7 +71,6 @@ export const bankAccountStatus = bankAccount
 export const bankAccountModel = bankAccount.mapModel((ctx) => {
     return {
         deposit: ctx.mapAction("DEPOSIT", (amount: number) => ({ amount })),
-        deposit2: ctx.mapAction("SUSPEND", (suspended: boolean) => ({ suspended })),
         withdraw: ctx.mapAction("WITHDRAW", (amount: number) => ({ amount })),
         suspend: ctx.mapAction("SUSPEND", (suspend: boolean) => ({ suspended: suspend })),
         depositsGreaterThan: ctx.mapQuery(depositsGreaterThanQuery.definition, (amount: number) => ({ amount })),

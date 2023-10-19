@@ -1,4 +1,4 @@
-import { localStack } from "./local";
+import { localStack } from "./storage/local";
 import { executeAction, compileView, compileQuery } from "./lib";
 import { EventStackDefinition, ViewDefinition, ActionHandlerEnum, QueryDefinition } from "./types";
 import * as assert from "assert";
@@ -89,12 +89,22 @@ export function stack<T extends string = null>(stackDef: EventStackDefinition<T>
 
                 for (let expectedView of testCase.expectedViews) {
                     const data = await compileView(stack, expectedView.definition);
-                    assert.deepStrictEqual(data, expectedView.state);
+
+                    if (typeof expectedView.state === "function") {
+                        await expectedView.state(data);
+                    } else {
+                        assert.deepStrictEqual(data, expectedView.state);
+                    }
                 }
 
                 for (let expectedQuery of testCase.expectedQueries) {
                     const data = (await compileQuery(stack, expectedQuery.definition, expectedQuery.parameters)).view;
-                    assert.deepStrictEqual(data, expectedQuery.state);
+
+                    if (typeof expectedQuery.state === "function") {
+                        await expectedQuery.state(data);
+                    } else {
+                        assert.deepStrictEqual(data, expectedQuery.state);
+                    }
                 }
 
             }
