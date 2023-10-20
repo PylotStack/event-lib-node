@@ -18,7 +18,7 @@ async function user() {
     const publicProfile = await repo.findOrCreateView("a@a.com", publicUserProfile);
     console.log(publicProfile);
 
-    const stack = await store.getStack(userProfileModel.definition.esDefinition.type, "a@a.com");
+    const stack = await store.getStack(userProfileModel.esDefinition.type, "a@a.com");
     const events = await stack.slice(0);
     console.log(events);
 }

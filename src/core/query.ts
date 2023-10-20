@@ -44,7 +44,6 @@ export async function compileQuery<T = null, U = null>(stack: ESStack, query: Qu
     const mappedFinalizer = query.finalizer ? (state: T) => query.finalizer(state, parameters) : undefined;
     const viewDefinition: ViewDefinition<T> = {
         ...query,
-        flows: [],
         events: mappedEvents,
         finalizer: mappedFinalizer,
     }

@@ -90,7 +90,6 @@ export interface ViewDefinition<ViewType = any> {
     esDefinition: EventStackDefinition;
     type: string;
     default: ViewType;
-    flows: any[];
     events: Record<string, ViewEventBuilderDefinition<ViewType>>;
     baseViews: ViewDefinition[];
     finalizer: ViewFinalizerHandler<ViewType>;
@@ -121,7 +120,6 @@ export interface BaseViewBuilder<T = any> {
 export interface PostEventViewBuilder<T = any, U extends string = null> extends BaseViewBuilder<T> {
     definition: ViewDefinition<T>;
     event: (type: U, handler: ViewEventBuilderHandler<T>) => PostEventViewBuilder<T, U>;
-    flow: (flow: any) => PostEventViewBuilder<T, U>;
     finalizer: (handler: ViewFinalizerHandler<T>) => BaseViewBuilder<T>;
 }
 
@@ -172,7 +170,6 @@ export interface EventStackBuilder<T extends Record<Str, ActionDefinition> = any
     definition: EventStackDefinition<Str>;
     action: <U extends string, V = any>(type: U, handler: ActionHandler<V> | AsyncActionHandler<V>) => EventStackBuilder<T & { [u in U]: V }, Str | U>;
     createView: <U = any>(type: string, defaultObj?: U) => ViewBuilder<U, Str>;
-    createFlow: <U = any>(type: string, flowDefinition: any) => ViewBuilder<U, Str>;
     createQuery: <W = any>(type: string, defaultObj?: W) => QueryBuilder<W, Str, any>;
     mapModel: <U>(mapper: (ctx: ModelMapContext<T, Str>) => U) => ModelDefinition<U, Str>;
 }
