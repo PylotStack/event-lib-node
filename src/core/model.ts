@@ -6,15 +6,11 @@ import {
     MapView, ViewDefinition, MapQuery, QueryDefinition, ModelMapContext, MapDeferredView, Executor
 } from "../types";
 import { uniq } from "../utils";
+import { InvalidSequenceError } from "../storage/shared";
 
 
 // TODO: Map deferred view -> async getter
-
-
-
-
-
-export function createModelBuilder<T, ActionKeywords extends string>(definition: ModelDefinition<T, ActionKeywords>): ModelBuilder<T, ActionKeywords> {
+export function createLocalModelRunner<T, ActionKeywords extends string>(definition: ModelDefinition<T, ActionKeywords>): ModelBuilder<T, ActionKeywords> {
     return {
         definition,
         fromStack: async (stack: ESStack, context?: RepositoryContext) => {
@@ -73,7 +69,22 @@ export function createModelBuilder<T, ActionKeywords extends string>(definition:
                 mapAction: (actionType: string, handler) => {
                     return async function _invokeAction(...args) {
                         const payload = handler(...args as any);
-                        await executor.executeAction(stack, definition.esDefinition.actions[actionType], payload);
+                        let maxTimesToExecute = 5;
+                        while (maxTimesToExecute > 0) {
+                            maxTimesToExecute--;
+
+                            try {
+                                await executor.executeAction(stack, definition.esDefinition.actions[actionType], payload);
+                                return;
+                            } catch (ex) {
+                                if(maxTimesToExecute === 0) throw ex;
+                                if (ex instanceof InvalidSequenceError) {
+                                    continue;
+                                }
+                                throw ex;
+                            }
+                        }
+
                         await processModel();
                     };
                 },

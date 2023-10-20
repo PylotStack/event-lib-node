@@ -318,7 +318,7 @@ export async function compileDetailedViews(stack: ESStack, views: ViewDefinition
 
     const baseDefault = allViews.reduce((acc, view) => ({ ...acc, ...(view.default ?? {}) }), {});
     const cachedView = (await context?.viewCache?.getFromCache(viewName)) ?? {
-        eventId: -1,
+        eventId: 0,
         view: baseDefault,
     };
 

@@ -7,7 +7,7 @@ import {
     BaseModel, RepositoryContext, QueryDefinition, BaseQueryBuilder, Executor,
 } from "../types";
 import { compileQuery, createQuery } from "./query";
-import { createModelBuilder } from "./model";
+import { createLocalModelRunner } from "./model";
 
 export function defineEventStack(type: string): EventStackBuilder<{}, null> {
     const self = {} as EventStackBuilder<{}, null>;
@@ -48,7 +48,7 @@ export function defineEventStack(type: string): EventStackBuilder<{}, null> {
                 esDefinition: definition,
                 modelMapper: mapper,
             };
-            return createModelBuilder(modelDefinition);
+            return modelDefinition;
         },
     } as EventStackBuilder);
 }
@@ -129,9 +129,10 @@ export function esRepository(store: LocalStore, context?: RepositoryContext): Re
         viewCache: localViewCache(),
     };
 
-    async function findOrCreateModel<T, ActionKeywords extends string>(id: string, model: ModelBuilder<T, ActionKeywords>): Promise<T & BaseModel<T> | undefined> {
-        const stack = await store.getOrCreateStack(model.definition.esDefinition.type, id);
-        const modelInstance = await model.fromStack(stack, context);
+    async function findOrCreateModel<T, ActionKeywords extends string>(id: string, model: ModelDefinition<T, ActionKeywords>): Promise<T & BaseModel<T> | undefined> {
+        const stack = await store.getOrCreateStack(model.esDefinition.type, id);
+        const runner = createLocalModelRunner(model);
+        const modelInstance = await runner.fromStack(stack, context);
         return modelInstance;
     }
 

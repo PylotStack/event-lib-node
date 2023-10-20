@@ -3,12 +3,12 @@ import { local } from "../src";
 import {
     bankAccountModel,
     bankAccountBalance,
-} from "./bankAccount";
+} from "./shared/bankAccount";
 import {
     flow,
 } from "../src/core/view";
 
-import { bankAccount } from "./bankAccount";
+import { bankAccount } from "./shared/bankAccount";
 
 const flowView = bankAccount.createFlow("balance", {
     balance: flow
@@ -35,7 +35,7 @@ async function getBankAccount() {
     await bankAccount2.deposit(30);
     await bankAccount2.suspend(true);
     await bankAccount2.suspend(false);
-    const stack = await store.getStack(bankAccountModel.definition.esDefinition.type, "7891");
+    const stack = await store.getStack(bankAccountModel.esDefinition.type, "7891");
     const events = await stack.slice(0);
     console.log(events);
 

@@ -1,4 +1,4 @@
-import { defineEventStack } from "../src/lib";
+import { defineEventStack } from "../../src/lib";
 
 interface BankAccountBalanceView {
     balance: number;

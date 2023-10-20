@@ -163,7 +163,7 @@ export interface ModelBuilder<T, ActionKeywords extends string> {
 }
 
 export interface Repository {
-    findOrCreateModel: <T, U extends string>(id: string, model: ModelBuilder<T, U>) => Promise<T & BaseModel<T>>,
+    findOrCreateModel: <T, U extends string>(id: string, model: ModelDefinition<T, U>) => Promise<T & BaseModel<T>>,
     findOrCreateView: <T>(id: string, view: BaseViewBuilder<T>) => Promise<T | undefined>,
     findOrCreateQuery: <T, U>(id: string, view: BaseQueryBuilder<T, U>, parameters: U) => Promise<T | undefined>,
 }
@@ -174,7 +174,7 @@ export interface EventStackBuilder<T extends Record<Str, ActionDefinition> = any
     createView: <U = any>(type: string, defaultObj?: U) => ViewBuilder<U, Str>;
     createFlow: <U = any>(type: string, flowDefinition: any) => ViewBuilder<U, Str>;
     createQuery: <W = any>(type: string, defaultObj?: W) => QueryBuilder<W, Str, any>;
-    mapModel: <U>(mapper: (ctx: ModelMapContext<T, Str>) => U) => ModelBuilder<U, Str>;
+    mapModel: <U>(mapper: (ctx: ModelMapContext<T, Str>) => U) => ModelDefinition<U, Str>;
 }
 
 export interface CompiledView {

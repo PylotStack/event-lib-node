@@ -1,6 +1,6 @@
 {
   "name": "@pylot/event-source",
-  "version": "0.1.2",
+  "version": "0.5.0",
   "description": "A library for create event sourced applications",
   "main": "dist/index.js",
   "scripts": {

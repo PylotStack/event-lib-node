@@ -1,6 +1,6 @@
 import { esRepository } from "../src/lib";
 import { local } from "../src";
-import { bankAccountModel, depositsGreaterThanQuery } from "./bankAccount";
+import { bankAccountModel, depositsGreaterThanQuery } from "./shared/bankAccount";
 
 async function getBankAccount() {
     const store = local.localStore();
@@ -15,7 +15,7 @@ async function getBankAccount() {
     await bankAccount2.withdraw(30);
     console.log(bankAccount2);
     await bankAccount2.deposit(30);
-    const stack = await store.getStack(bankAccountModel.definition.esDefinition.type, "7891");
+    const stack = await store.getStack(bankAccountModel.esDefinition.type, "7891");
     const events = await stack.slice(0);
     console.log(events);
 
