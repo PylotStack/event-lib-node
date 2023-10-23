@@ -25,10 +25,14 @@ export function stack<T extends string = null>(stackDef: EventStackDefinition<T>
     };
 
     function createTestCase() {
-        return {
+        const testCase = {
             expectedViews: [],
             expectedQueries: [],
         };
+
+        definition.testCases.push(testCase);
+
+        return testCase;
     }
 
     function lastTestCase() {
@@ -41,10 +45,10 @@ export function stack<T extends string = null>(stackDef: EventStackDefinition<T>
             return self;
         },
         onAction(actionType: string, payload: Record<string, any>) {
-            definition.testCases.push(Object.assign(createTestCase(), {
+            Object.assign(createTestCase(), {
                 actionType,
                 payload,
-            }));
+            });
             return self;
         },
         commit() {
