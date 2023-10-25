@@ -8,8 +8,6 @@ import {
 import { uniq } from "../utils";
 import { InvalidSequenceError } from "../storage/shared";
 
-
-// TODO: Map deferred view -> async getter
 export function createLocalModelRunner<T, ActionKeywords extends string>(definition: ModelDefinition<T, ActionKeywords>): ModelBuilder<T, ActionKeywords> {
     return {
         definition,
