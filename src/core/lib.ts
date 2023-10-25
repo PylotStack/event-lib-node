@@ -70,8 +70,11 @@ export async function executeAction(stack: ESStack, action: ActionDefinition, ac
     const actionHandler = {
         [ActionHandlerEnum.REJECT]: (result: ActionHandlerResult) => {
             const err: any = new Error(`${result.action}: ${result.type}`);
-            err.action = result.action;
+            err.code = result.action;
             err.result = result.type;
+            err.action = action.type;
+            err.stackType = action.esDefinition.type;
+            err.stack = stack.namespace;
             throw err;
         },
         [ActionHandlerEnum.COMMIT]: async (result: ActionHandlerResult) => {
